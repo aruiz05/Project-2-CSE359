@@ -139,7 +139,7 @@ valueA(knight, 300) :- ! .
 valueA(bishop, 300) :- ! .
 valueA(pawn,   100) :- ! .
 
-% Strength evaluation (basically same as b agaon)
+% strength evaluation (basically same as b agaon)
 strengthA([state(_, _, _, _)|Board], Color, OppositeColor, Strength) :-
     strengthA(Board, Color, OppositeColor, Strength), !.
 
@@ -153,7 +153,7 @@ strengthA([piece(_, OppositeColor, Type)|Board], Color, OppositeColor, Strength)
     strengthA(Board, Color, OppositeColor, PartialStrength),
     Strength is PartialStrength - Value.
 
-% Move generator (same as b)
+% move generator (same as b)
 collect_movesA(Board, Color, Moves) :-
     bagof(move(From, To), Piece^move(Board,From,To,Color,Piece), Moves).
 
@@ -173,6 +173,10 @@ sufficientA(Player, Board, Turn, Moves, Depth, Alpha, Beta, Move, Val,
     new_bounds(Player, Turn, Alpha, Beta, Val, NewAlpha, NewBeta),
     find_best(Player, Board, Turn, Moves, Depth, NewAlpha, NewBeta, Move1, Val1),
     better_of(Player, Turn, Move, Val, Move1, Val1, BestMove, BestVal).
+
+    % wrapper to fix error?
+    bookA(Board, From, To) :-
+    bookB(Board, From, To).
 /* ----------------------------------------------------------------------- */
 
 
@@ -450,8 +454,59 @@ report_move(Color, Board, From_File-From_Rank, To_File-To_Rank, Rating) :-
 /* TASK 1: REPLACE THE print_board PREDICATE BELOW WITH YOUR CODE */
 /*         KEEP THE NAME print_board, JUST CHANGE THE IMPLEMENTATION*/
 /* ----------------------------------------------------------------------- */
+% print the whole board
 print_board(Board) :-
-    write(Board), nl.
+    nl,
+    write('    a   b   c   d   e   f   g   h'), nl,
+    write('  ---------------------------------'), nl,
+    print_rows(Board, 8),
+    write('  ---------------------------------'), nl, nl.
+
+% printing rows
+print_rows(_, 0).
+print_rows(Board, Rank) :-
+    write(Rank), write(' |'),
+    print_cols(Board, Rank, a),
+    nl,
+    NextRank is Rank - 1,
+    print_rows(Board, NextRank).
+
+% printing columns
+print_cols(_, _, i) :- write('').
+print_cols(Board, Rank, File) :-
+    print_square(Board, File, Rank),
+    next_file(File, NextFile),
+    print_cols(Board, Rank, NextFile).
+
+% print the square
+print_square(Board, File, Rank) :-
+    ( occupied_by(Board, File-Rank, Color, Piece) ->
+        piece_symbol(Piece, Symbol),
+        ( Color = black ->
+            write('*'), write(Symbol)
+        ;
+            write(' '), write(Symbol)
+        )
+    ;
+        write('  ')
+    ),
+    write(' |').
+
+next_file(a, b).
+next_file(b, c).
+next_file(c, d).
+next_file(d, e).
+next_file(e, f).
+next_file(f, g).
+next_file(g, h).
+next_file(h, i).   % stopping condition
+
+piece_symbol(king,   'K').
+piece_symbol(queen,  'Q').
+piece_symbol(rook,   'R').
+piece_symbol(bishop, 'B').
+piece_symbol(knight, 'N').
+piece_symbol(pawn,   'P').
 /* ----------------------------------------------------------------------- */
 
 
