@@ -76,8 +76,8 @@ play(Board) :-
 		/* move playerA */
 		/* get_command asks the user for the move to be made. 
 		   modify this so that playerA moves on its own */
-    get_command(Command),
-    execute_command(Command, Board, NewBoard),
+       /* just delete get command for auto play */
+    execute_command(playerA, Board, NewBoard),
 
     /* move playerB */
     execute_command(playerB, NewBoard, NextNewBoard),
@@ -127,6 +127,52 @@ strengthA([], _, _, Rand) :-
 /* WRITE YOUR CODE FOR TASK-2 HERE */
 /* TASK 2: IMPLEMENT playerA CODE HERE */
 /* MIMIC THE CODE FOR playerB */
+/* -------------------- PlayerA (WHITE) CODE -------------------- */
+
+ply_depthA(3).
+
+% Value function (same as b)
+valueA(king, 10000) :- ! .
+valueA(queen,  900) :- ! .
+valueA(rook,   500) :- ! .
+valueA(knight, 300) :- ! .
+valueA(bishop, 300) :- ! .
+valueA(pawn,   100) :- ! .
+
+% Strength evaluation (basically same as b agaon)
+strengthA([state(_, _, _, _)|Board], Color, OppositeColor, Strength) :-
+    strengthA(Board, Color, OppositeColor, Strength), !.
+
+strengthA([piece(_, Color, Type)|Board], Color, OppositeColor, Strength) :-
+    valueA(Type, Value),
+    strengthA(Board, Color, OppositeColor, PartialStrength),
+    Strength is PartialStrength + Value, !.
+
+strengthA([piece(_, OppositeColor, Type)|Board], Color, OppositeColor, Strength) :-
+    valueA(Type, Value),
+    strengthA(Board, Color, OppositeColor, PartialStrength),
+    Strength is PartialStrength - Value.
+
+% Move generator (same as b)
+collect_movesA(Board, Color, Moves) :-
+    bagof(move(From, To), Piece^move(Board,From,To,Color,Piece), Moves).
+
+% helper (copy of sufficientB)
+sufficientA(Player, Board, Turn, [], Depth, Alpha, Beta, Move, Val, Move, Val) :- !.
+
+sufficientA(Player, Board, Turn, Moves, Depth, Alpha, Beta, Move, Val, Move, Val) :-
+    Player \== Turn,
+    Val < Alpha, !.
+
+sufficientA(Player, Board, Turn, Moves, Depth, Alpha, Beta, Move, Val, Move, Val) :-
+    Player = Turn,
+    Val > Beta, !.
+
+sufficientA(Player, Board, Turn, Moves, Depth, Alpha, Beta, Move, Val,
+    BestMove, BestVal) :-
+    new_bounds(Player, Turn, Alpha, Beta, Val, NewAlpha, NewBeta),
+    find_best(Player, Board, Turn, Moves, Depth, NewAlpha, NewBeta, Move1, Val1),
+    better_of(Player, Turn, Move, Val, Move1, Val1, BestMove, BestVal).
 /* ----------------------------------------------------------------------- */
 
 
